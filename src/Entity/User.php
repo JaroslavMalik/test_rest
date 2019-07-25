@@ -3,10 +3,12 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
+ * @UniqueEntity(fields={"email"}, message="There is already an account with this email")
  */
 class User implements UserInterface
 {
@@ -100,9 +102,11 @@ class User implements UserInterface
      */
     public function getRoles(): array
     {
-        $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
+//        $roles = $this->roles;
+//        // guarantee every user at least has ROLE_USER
 //        $roles[] = 'ROLE_USER';
+		
+		$roles = array();
 		$roles[] = $this->role->getCode();
 
         return array_unique($roles);
@@ -110,7 +114,7 @@ class User implements UserInterface
 
     public function setRoles(array $roles): self
     {
-        $this->roles = $roles;
+//        $this->roles = $roles;
 
         return $this;
     }
