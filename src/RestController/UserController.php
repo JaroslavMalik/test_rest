@@ -19,13 +19,20 @@ class UserController extends FOSRestController
 {
     /**
      * Creates an User resource
-     * @Rest\Post("/users")
+     * @Rest\Post("/users", name="rest_create_user")
      * @param Request $request
      * @return View
      */
     public function postUserX(Request $request, UserPasswordEncoderInterface $passwordEncoder): View
     {
 		$role = $this->getDoctrine()->getRepository(Role::class)->find($request->get('roleId'));
+		if (!$role) {
+			return View::create(
+				'Role with id ' . $request->get('roleId') . ' does not exist!', 
+				Response::HTTP_NOT_FOUND
+			);
+			//throw new EntityNotFoundException('Role with id '.$articleId.' does not exist!');
+		}
 		
         $user = new User();
 		$user->setName($request->get('name'));
@@ -38,9 +45,16 @@ class UserController extends FOSRestController
 			)
 		);
 
-		$entityManager = $this->getDoctrine()->getManager();
-		$entityManager->persist($user);
-		$entityManager->flush();
+		try {
+			$entityManager = $this->getDoctrine()->getManager();
+			$entityManager->persist($user);
+			$entityManager->flush();
+		} catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
+			return View::create(
+				'User with email "' . $request->get('email') . '" already exist!', 
+				Response::HTTP_CONFLICT
+			);
+		}
 
         // In case our POST was a success we need to return a 201 HTTP CREATED response
         return View::create(

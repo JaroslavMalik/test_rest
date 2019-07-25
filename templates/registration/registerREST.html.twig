@@ -1,0 +1,56 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Register{% endblock %}
+
+{% block body %}
+	
+	<h1>Register</h1>
+
+    <form name="registration_form">
+        <div ><label for="registration_form_name" class="required">Name</label><input type="text" id="registration_form_name" name="registration_form[name]" required="required" maxlength="180" /></div>
+        <div ><label for="registration_form_email" class="required">Email</label><input type="text" id="registration_form_email" name="registration_form[email]" required="required" maxlength="180" /></div>
+        <div ><label for="registration_form_plainPassword" class="required">Plain password</label><input type="password" id="registration_form_plainPassword" name="registration_form[plainPassword]" required="required" /></div>
+        <div ><label for="registration_form_role" class="required">Role</label><select id="registration_form_role" name="registration_form[role]"><option value="1">Uživatel</option><option value="2">Administrátor</option></select></div>
+
+        <button class="btn" id="registration_form_btn">Register</button>
+	</form>
+	
+    <div id="response"></div>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+	
+    <script>
+		var roles;
+		$(document).ready(function() {
+			$.ajax({
+				url: "{{ path('rest_roles') }}"
+			}).then(function(data) {
+				console.log(data);
+				roles = data;
+			});
+		});
+		
+        $("#registration_form_btn").on("click", function(){
+			data = {
+				"name":$('#registration_form_name').val(),
+				"email":$('#registration_form_email').val(),
+				"roleId":$('#registration_form_role').val(),
+				"plainPassword":$('#registration_form_plainPassword').val()
+			};
+			$.ajax({
+				type: "POST",
+				url: "{{ path('rest_create_user') }}",
+				data: data,
+				success: function(data) {
+					$('#response').text(roles[data["roleId"]].name + ": " + data["name"] + " (" + data["email"] + "), id:" + data["id"] + " ");
+				},
+				error: function(errMsg) {
+					console.log(errMsg);
+					$('#response').text(errMsg.responseJSON);
+				}		
+			});
+			return false;
+		}); 
+		
+    </script>
+{% endblock %}

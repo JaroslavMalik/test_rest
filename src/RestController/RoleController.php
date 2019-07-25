@@ -14,7 +14,7 @@ class RoleController extends FOSRestController
 {
     /**
      * Retrieves a collection of Users resource
-     * @Rest\Get("/roles")
+     * @Rest\Get("/roles", name="rest_roles")
      * @return View
      */
     public function getRolesX(): View
