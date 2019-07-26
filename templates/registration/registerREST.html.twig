@@ -2,55 +2,152 @@
 
 {% block title %}Register{% endblock %}
 
-{% block body %}
-	
-	<h1>Register</h1>
+{% block stylesheets %}
+<link rel="stylesheet" href="https://getbootstrap.com/docs/4.3/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="stylesheet" href="https://getbootstrap.com/docs/4.3/examples/floating-labels/floating-labels.css">
 
-    <form name="registration_form">
-        <div ><label for="registration_form_name" class="required">Name</label><input type="text" id="registration_form_name" name="registration_form[name]" required="required" maxlength="180" /></div>
-        <div ><label for="registration_form_email" class="required">Email</label><input type="text" id="registration_form_email" name="registration_form[email]" required="required" maxlength="180" /></div>
-        <div ><label for="registration_form_plainPassword" class="required">Plain password</label><input type="password" id="registration_form_plainPassword" name="registration_form[plainPassword]" required="required" /></div>
-        <div ><label for="registration_form_role" class="required">Role</label><select id="registration_form_role" name="registration_form[role]"><option value="1">Uživatel</option><option value="2">Administrátor</option></select></div>
-
-        <button class="btn" id="registration_form_btn">Register</button>
-	</form>
+<style>
+	.form-label-group > select {
+		height: 3.125rem;
+		padding: .75rem;
+	}
 	
-    <div id="response"></div>
+	.form-label-group select:not(:placeholder-shown) {
+		padding-top: 1.25rem;
+		padding-bottom: .25rem;
+	}
+	.form-label-group select:not(:placeholder-shown) ~ label {
+		padding-top: .25rem;
+		padding-bottom: .25rem;
+		font-size: 12px;
+		color: #777;
+	}
+	.btn-right {
+		float: right;
+	}
+</style>
+{% endblock %}
 
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-	
-    <script>
-		var roles;
-		$(document).ready(function() {
-			$.ajax({
-				url: "{{ path('rest_roles') }}"
-			}).then(function(data) {
-				console.log(data);
-				roles = data;
-			});
+{% block javascripts %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>	
+<script>
+	var roles;
+	$(document).ready(function() {
+		$.ajax({
+			url: "{{ path('rest_roles') }}"
+		}).then(function(data) {
+			console.log(data);
+			roles = data;
 		});
-		
-        $("#registration_form_btn").on("click", function(){
-			data = {
-				"name":$('#registration_form_name').val(),
-				"email":$('#registration_form_email').val(),
-				"roleId":$('#registration_form_role').val(),
-				"plainPassword":$('#registration_form_plainPassword').val()
-			};
-			$.ajax({
-				type: "POST",
-				url: "{{ path('rest_create_user') }}",
-				data: data,
-				success: function(data) {
-					$('#response').text(roles[data["roleId"]].name + ": " + data["name"] + " (" + data["email"] + "), id:" + data["id"] + " ");
-				},
-				error: function(errMsg) {
-					console.log(errMsg);
-					$('#response').text(errMsg.responseJSON);
-				}		
-			});
+	});
+
+	$("#registration_form_btn").on("click", function() {
+		// kontrola vyplněnosti, ostatní necháme na defaultním zvýrazňováním
+		document.getElementById("registration_form_name").setCustomValidity('');
+		document.getElementById("registration_form_email").setCustomValidity('');
+		document.getElementById("registration_form_plainPassword").setCustomValidity('');
+		if (!document.getElementById("registration_form_name").checkValidity()) {
+			document.getElementById("registration_form_name").setCustomValidity('Enter name');
 			return false;
-		}); 
-		
-    </script>
+		}
+		if (!document.getElementById("registration_form_email").checkValidity()) {
+			document.getElementById("registration_form_email").setCustomValidity('Enter valid email');
+			return false;
+		}
+		if (!document.getElementById("registration_form_plainPassword").checkValidity()) {
+			document.getElementById("registration_form_plainPassword").setCustomValidity('Enter password');
+			return false;
+		}
+		data = {
+			"name":$('#registration_form_name').val(),
+			"email":$('#registration_form_email').val(),
+			"roleId":$('#registration_form_role').val(),
+			"plainPassword":$('#registration_form_plainPassword').val()
+		};
+		$.ajax({
+			type: "POST",
+			url: "{{ path('rest_create_user') }}",
+			data: data,
+			success: function(data) {
+				$('#id-response').text(data["id"]);
+				$('#name-response').text(data["name"]);
+				$('#email-response').text(data["email"]);
+				$('#role-response').text(roles[data["roleId"]].name);
+				
+				$('#mainModalCenter').modal('show');
+				$('#registration_form_name').val('');
+				$('#registration_form_email').val('');
+				$('#registration_form_plainPassword').val('');
+			},
+			error: function(errMsg) {
+				console.log(errMsg);
+				$('#error-response').text(errMsg.responseJSON);
+				$('#errorModalCenter').modal('show');
+			}		
+		});
+		return false;
+	}); 
+
+</script>
+{% endblock %}
+
+{% block body %}
+<form name="registration_form" class="form-signin">
+	<div class="card">
+		<div class="card-body">
+			<h1 class="card-title">Register</h1>
+
+	<div class="form-label-group">
+		<input type="text" id="registration_form_name" name="registration_form[name]" required="required" maxlength="180" class="form-control" placeholder="Name" />
+		<label for="registration_form_name" class="required">Name</label>
+	</div>
+	<div class="form-label-group">
+		<input type="email" id="registration_form_email" name="registration_form[email]" required="required" maxlength="180" class="form-control" placeholder="Email" />
+		<label for="registration_form_email" class="required">Email</label>
+	</div>
+	<div class="form-label-group">
+		<input type="password" id="registration_form_plainPassword" name="registration_form[plainPassword]" required="required" class="form-control" placeholder="Password" />
+		<label for="registration_form_plainPassword" class="required">Password</label>
+	</div>
+	<div class="form-label-group">
+		<select id="registration_form_role" name="registration_form[role]" class="form-control" placeholder="Role" ><option value="1">Uživatel</option><option value="2">Administrátor</option></select>
+		<label for="registration_form_role" class="required">Role</label>
+	</div>
+
+	<button class="btn btn-lg btn-primary btn-block" id="registration_form_btn" data-toggle="modal" data-target="#exampleModalCenter">Register</button>
+
+	</div></div>
+</form>
+	
+<!-- Modal -->
+<div class="modal fade" id="mainModalCenter" tabindex="-1" role="dialog" aria-labelledby="mainModalCenterTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+	  <div class="modal-header">
+        <h5 class="modal-title">Vytvořena nová registrace</h5>
+      </div>
+      <div class="modal-body">
+		<strong>Id:</strong> <span id="id-response">...</span><br />   
+		<strong>Name:</strong> <span id="name-response">...</span><br />   
+		<strong>Email:</strong> <span id="email-response">...</span><br />   
+		<strong>Role:</strong> <span id="role-response">...</span>        
+        <button type="button" class="btn btn-primary btn-right" data-dismiss="modal">Ok</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="errorModalCenter" tabindex="-1" role="dialog" aria-labelledby="mainModalCenterTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-body">
+		<div id="error-response">...</div>        
+        <button type="button" class="btn btn-primary btn-right" data-dismiss="modal">Ok</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
